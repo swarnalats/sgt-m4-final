@@ -10,6 +10,26 @@ const app = express();
     res.send(results);
 });
 
+app.get('/api/grades', async(req,res) => {
+    const [results] = await db.query('SELECT pid,course, grade,name,updated from grades');
+
+    const grades = results.map(g => {
+        const studentGrade = {
+            "pid":g.pid,
+            "course":g.course,
+            "grade":g.grade,
+            "name":g.name,
+            "lastUpdated":g.updated
+        }
+        return studentGrade;
+    });
+    res.send({
+        "records": 
+            grades
+        
+    });
+});    
+
 app.listen(PORT,() => {
     console.log('Server listening at localhost:' + PORT);
 } )
