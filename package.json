@@ -4,7 +4,8 @@
   "description": "Student Grade Table",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start":"nodemon index.js"
   },
   "repository": {
     "type": "git",
@@ -15,5 +16,12 @@
   "bugs": {
     "url": "https://github.com/swarnalats/sgt-m4-final/issues"
   },
-  "homepage": "https://github.com/swarnalats/sgt-m4-final#readme"
+  "homepage": "https://github.com/swarnalats/sgt-m4-final#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "mysql2": "^1.7.0"
+  },
+  "devDependencies": {
+    "nodemon": "^1.19.3"
+  }
 }
