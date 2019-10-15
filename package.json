@@ -1,0 +1,19 @@
+{
+  "name": "sgt-m4-final",
+  "version": "1.0.0",
+  "description": "Student Grade Table",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/swarnalats/sgt-m4-final.git"
+  },
+  "author": "Swarnalata Keshavan",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/swarnalats/sgt-m4-final/issues"
+  },
+  "homepage": "https://github.com/swarnalats/sgt-m4-final#readme"
+}
