@@ -81,6 +81,87 @@ app.post('/api/grades', async(req,res,next) => {
 
 }); 
 
+app.patch('/api/grades/:record_pid', async(req,res,next)=> {
+    try{
+        const {body, params:{record_pid}} = req;
+        const whiteList = ['course','grade','name'];
+        const updateValues = [];
+        let sql = 'UPDATE grades SET';
+        let didUpdate = false;
+        
+        if(!record_pid){
+            throw new StatusError(422,'Invalid student ID received');
+        }
+
+        whiteList.forEach(col => {
+            let update = body[col];
+            
+            if(update <1 || update > 100){
+                throw new StatusError(422, 'Please enter a grade between 1 and 100'); 
+            }
+
+            if(update !== undefined){
+                didUpdate = true;
+                if(updateValues.length){
+                    sql += ',';                    
+                }
+            }
+            sql += ' ';
+            sql += `${col}=?`;
+            updateValues.push(update);
+        });
+    
+    if(didUpdate){
+        sql += ' WHERE pid=?';
+        updateValues.push(record_pid);
+
+        const [result] = await db.execute(sql, updateValues);
+
+        if(result.affectedRows){
+            status = 200;
+            const [[student]] = await db.execute(`SELECT id, course, grade, name FROM grades WHERE pid=?`,[record_pid]);
+            
+            return res.send({
+                message:`Successfully updated the student with ${student.id}`,
+                student:student
+            })
+        }
+        throw new StatusError(404, 'Unable to update the student info. No student found with ID:${id}');
+    }
+    }   catch(err){       
+            next(err);
+        }
+});
+
+app.delete('/api/grades/:record_pid',async(req,res,next) => {
+    try{
+
+        const { record_pid } = req.params;
+        console.log("Record ID",record_pid);
+        if(!record_pid){
+            throw new StatusError(422, "Invalid student id received"); 
+        }
+
+        const [result] = await db.execute('DELETE FROM grades WHERE pid=?',[record_pid]);
+
+        let message = `Unable to delete, no student found with PID: ${record_pid}`;
+
+        if(result.affectedRows){
+            message = `Successfully deleted the student with PID: ${record_pid}`;            
+        }
+        else {
+            throw new StatusError(404, `No student found with ID:${record_pid}`);
+        }
+        res.send({
+            message
+        });
+
+
+        }catch(err){
+        next(err);
+    }
+    });
+
 app.use(defaultErrorHandler);
 
 app.listen(PORT,() => {
