@@ -44,7 +44,6 @@ app.get('/api/grades', async(req,res,next) => {
 app.post('/api/grades', async(req,res,next) => {
     try { 
     const {course = null, grade = null, name = null} = req.body; 
-    console.log ("course",course,grade,name);
     const errors = [];
     if( !course){
         errors.push("No course received");
@@ -56,18 +55,14 @@ app.post('/api/grades', async(req,res,next) => {
         errors.push("No name received");
     }
     if(errors.length > 0){
-        const errorMessage = {
-            "code":422,
-            errors            
-        }
-        throw new StatusError(422, errorMessage);
+        throw new StatusError(422, returnErrorMessage(422, errors));
     }
     
     if( grade < 0 || grade > 100){
-             throw new StatusError(422,"Course grade must be a number between 0 and 100 inclusive. 205 is invalid.");
+            throw new StatusError(422, returnErrorMessage(422,"Course grade must be a number between 0 and 100 inclusive. 205 is invalid."));
     }
     else {
-            const [results] = await db.execute('INSERT INTO grades (pid, course, grade, name) VALUES(?,?,?,?)',["gfghfgghhff",course,grade,name]);
+            const [results] = await db.execute('INSERT INTO grades (pid, course, grade, name) VALUES(UUID(),?,?,?)',[course,grade,name]);
             
             if(results.affectedRows > 0 ){     
                 const [studentRecord] = await db.execute('SELECT * FROM grades WHERE id=?',[results.insertId]);     
@@ -95,34 +90,28 @@ app.post('/api/grades', async(req,res,next) => {
 //Feature Set-6
 app.patch('/api/grades/:record_pid', async(req,res,next)=> {
     try{
-        console.log("Inside try");
         
-        const {body, params:{record_pid}} = req;
+        const {body, params:{record_pid = null}} = req;
         const whiteList = ['course','grade','name'];
         const updateValues = [];
         let sql = 'UPDATE grades SET';
         let didUpdate = false;
         
-        if(!record_pid){
-            throw new StatusError(422,'Invalid student ID received');
-        }
-
         whiteList.forEach(col => {
             let update = body[col];
             
-            console.log("COL", update);
             if(update <1 || update > 100){
-                throw new StatusError(422, 'Course grade must be a number between 0 and 100 inclusive. 125 is invalid.'); 
+                throw new StatusError(422, returnErrorMessage(422,'Course grade must be a number between 0 and 100 inclusive. 125 is invalid.' ));
             }
             if(update !== undefined){
                 didUpdate = true;
                 if(updateValues.length){
                     sql += ',';                    
                 }
+                sql += ' ';
+                sql += `${col}=?`;
+                updateValues.push(update);
             }
-            sql += ' ';
-            sql += `${col}=?`;
-            updateValues.push(update);
         });
     
     if(didUpdate){
@@ -140,10 +129,10 @@ app.patch('/api/grades/:record_pid', async(req,res,next)=> {
                 student:student
             })
         }
-        throw new StatusError(404, `No student found with ID:${record_pid}`);
+        throw new statusError(404, returnErrorMessage(404,`No record found with ID:${record_pid}` ));
     }
     else {
-        throw new statusError(400, "No valid fields received to update");
+        throw new StatusError(400, returnErrorMessage(400,"No valid fields received to update"));
     }
     }catch(err){       
         next(err);
@@ -155,9 +144,9 @@ app.delete('/api/grades/:record_pid',async(req,res,next) => {
     try{
 
         const { record_pid } = req.params;
-        console.log("Record ID",record_pid);
+        
         if(!record_pid){
-            throw new StatusError(422, "Invalid student id received"); 
+            throw new StatusError(422, returnErrorMessage(422,"Invalid student id received")); 
         }
 
         const [result] = await db.execute('DELETE FROM grades WHERE pid=?',[record_pid]);
@@ -168,7 +157,7 @@ app.delete('/api/grades/:record_pid',async(req,res,next) => {
             message = `Successfully deleted the student with PID: ${record_pid}`;            
         }
         else {
-            throw new StatusError(404, `No student found with ID:${record_pid}`);
+            throw new StatusError(404, returnErrorMessage(404,`No record found with ID:${record_pid}`));
         }
         res.send({
             message
@@ -184,3 +173,12 @@ app.use(defaultErrorHandler);
 app.listen(PORT,() => {
     console.log('Server listening at localhost:' + PORT);
 })
+
+function returnErrorMessage(code,message){
+    const errors = [message];
+    const errorMessage = {
+        "code":code,
+         errors   
+    }
+    return errorMessage;
+}
